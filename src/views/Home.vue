@@ -1,41 +1,32 @@
 <template>
   <div class="home">
     <div class="container">
+      <div>{{ this.startYear }}年から10年間のライフイベント</div>
+      <button type="button" @click="openEditYear">変更</button>
       <Chart :chartData="chartItems" :options="chartOptions" />
       <button type="button" @click="toFamilyEdit">作成</button>
       <table>
         <thead>
           <tr>
             <th>名前</th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
             <td>{{ family.name }}</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td v-for="n of 10" :key="n">{{ calculateAge(family.birthday, n - 1) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
+    <ModalWindow @close="closeEditYear()" v-show="showEditYear">
+      <h6>年の変更</h6>
+      <div><input type="number" v-model="startYear" />年</div>
+      <template slot="footer">
+        <button @click="closeEditYear()">閉じる</button>
+      </template>
+    </ModalWindow>
   </div>
 </template>
 
@@ -43,11 +34,14 @@
 // @ is an alias to /src
 import { Bar } from 'vue-chartjs';
 import Chart from './ChartBox.js';
+import moment from 'moment';
+import ModalWindow from '@/components/ModalWindow';
 
 export default {
   extends: Bar,
   components: {
     Chart,
+    ModalWindow,
   },
   data() {
     return {
@@ -101,20 +95,39 @@ export default {
           ],
         },
       },
-      showCreateFamily: false,
+      showEditYear: false,
       family: [],
+      startYear: this.$store.getters.startYear,
     };
   },
   methods: {
-    openCreateFamily() {
-      this.showCreateFamily = true;
+    openEditYear() {
+      this.showEditYear = true;
     },
-    closeCreateFamily() {
-      this.showCreateFamily = false;
+    closeEditYear() {
+      this.showEditYear = false;
     },
     toFamilyEdit() {
       this.$router.push({ name: 'FamilyEdit' });
     },
+    toYearEdit() {
+      this.$router.push({ name: 'FamilyEdit' });
+    },
+    calculateAge(birthday, n) {
+      return `${this.startYear - moment(birthday).year() + n}歳`;
+    },
   },
 };
 </script>
+
+<style scoped>
+table,
+td,
+th {
+  border: 1px solid #333;
+  border-collapse: collapse;
+}
+th {
+  width: 100px;
+}
+</style>

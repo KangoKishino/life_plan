@@ -1,7 +1,10 @@
+const date = new Date();
+
 export default {
   state() {
     return {
       familyList: [],
+      startYear: date.getFullYear(),
     };
   },
   mutations: {
@@ -11,10 +14,16 @@ export default {
     deleteFamily(state, index) {
       state.familyList.splice(index, 1);
     },
+    setYear(state, year) {
+      state.startYear = year;
+    },
   },
   getters: {
     familyList(state) {
       return state.familyList;
+    },
+    startYear(state) {
+      return state.startYear;
     },
   },
   actions: {
@@ -24,6 +33,9 @@ export default {
     },
     deleteFamily({ commit }, { deleteIndex }) {
       commit('deleteFamily', deleteIndex);
+    },
+    editYear({ commit }, { year }) {
+      commit('setYear', year);
     },
   },
 };
