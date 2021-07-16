@@ -34,6 +34,23 @@
           </tr>
         </tbody>
       </table>
+      <button type="button" @click="toIncomeEdit">収入の登録</button>
+      <table>
+        <thead>
+          <tr>
+            <th>収入</th>
+            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
+            <td>{{ family.name }}</td>
+            <td v-for="n of 10" :key="n">
+              {{ calculateIncome(family.name, parseInt(startYear) + n - 1) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
@@ -128,6 +145,9 @@ export default {
     toSpendingEdit() {
       this.$router.push({ name: 'SpendingEdit' });
     },
+    toIncomeEdit() {
+      this.$router.push({ name: 'IncomeEdit' });
+    },
     calculateAge(birthday, n) {
       return `${this.startYear - moment(birthday).year() + n}歳`;
     },
@@ -138,6 +158,18 @@ export default {
         }
       }
       return;
+    },
+    calculateIncome(name, year) {
+      let list = {};
+      for (const incomeList of this.$store.getters.incomeList) {
+        if (incomeList.name === name) {
+          list = incomeList;
+          break;
+        }
+      }
+      const elapsedYear = year - list.year;
+      if (elapsedYear < 0) return 0;
+      return (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
     },
   },
 };

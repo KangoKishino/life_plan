@@ -7,6 +7,7 @@ export default {
       startYear: date.getFullYear(),
       homeSpendingList: [],
       carSpendingList: [],
+      incomeList: [],
     };
   },
   mutations: {
@@ -31,6 +32,14 @@ export default {
     deleteCarSpendingList(state, index) {
       state.carSpendingList.splice(index, 1);
     },
+    setIncome(state, data) {
+      state.incomeList.forEach((element, index) => {
+        if (element.name === data.name) {
+          state.incomeList.splice(index, 1);
+        }
+      });
+      state.incomeList.push(data);
+    },
   },
   getters: {
     familyList(state) {
@@ -44,6 +53,9 @@ export default {
     },
     carSpendingList(state) {
       return state.carSpendingList;
+    },
+    incomeList(state) {
+      return state.incomeList;
     },
   },
   actions: {
@@ -71,6 +83,10 @@ export default {
       } else {
         commit('deleteCarSpendingList', deleteIndex);
       }
+    },
+    editIncome({ commit }, { name, year, income, rate }) {
+      const data = { name, year, income, rate };
+      commit('setIncome', data);
     },
   },
 };
