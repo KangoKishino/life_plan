@@ -23,6 +23,16 @@ const routes = [
     name: 'FamilyEdit',
     component: () => import('../views/FamilyEdit.vue'),
   },
+  {
+    path: '/spending-edit',
+    name: 'SpendingEdit',
+    component: () => import('../views/SpendingEdit.vue'),
+  },
+  {
+    path: '/income-edit',
+    name: 'IncomeEdit',
+    component: () => import('../views/IncomeEdit.vue'),
+  },
 ];
 
 const router = new VueRouter({
