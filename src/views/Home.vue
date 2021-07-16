@@ -19,6 +19,21 @@
           </tr>
         </tbody>
       </table>
+      <button type="button" @click="toSpendingEdit">支出の登録</button>
+      <table>
+        <thead>
+          <tr>
+            <th>支出</th>
+            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>家</td>
+            <td v-for="n of 10" :key="n">{{ spendingHome(parseInt(startYear) + n - 1) }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
@@ -110,11 +125,19 @@ export default {
     toFamilyEdit() {
       this.$router.push({ name: 'FamilyEdit' });
     },
-    toYearEdit() {
-      this.$router.push({ name: 'FamilyEdit' });
+    toSpendingEdit() {
+      this.$router.push({ name: 'SpendingEdit' });
     },
     calculateAge(birthday, n) {
       return `${this.startYear - moment(birthday).year() + n}歳`;
+    },
+    spendingHome(year) {
+      for (const home of this.$store.getters.homeSpendingList) {
+        if (parseInt(home.year) === year) {
+          return home.price;
+        }
+      }
+      return;
     },
   },
 };

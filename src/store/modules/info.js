@@ -5,6 +5,8 @@ export default {
     return {
       familyList: [],
       startYear: date.getFullYear(),
+      homeSpendingList: [],
+      carSpendingList: [],
     };
   },
   mutations: {
@@ -17,6 +19,18 @@ export default {
     setYear(state, year) {
       state.startYear = year;
     },
+    setHomeSpendingList(state, data) {
+      state.homeSpendingList.push(data);
+    },
+    setCarSpendingList(state, data) {
+      state.carSpendingList.push(data);
+    },
+    deleteHomeSpendingList(state, index) {
+      state.homeSpendingList.splice(index, 1);
+    },
+    deleteCarSpendingList(state, index) {
+      state.carSpendingList.splice(index, 1);
+    },
   },
   getters: {
     familyList(state) {
@@ -24,6 +38,12 @@ export default {
     },
     startYear(state) {
       return state.startYear;
+    },
+    homeSpendingList(state) {
+      return state.homeSpendingList;
+    },
+    carSpendingList(state) {
+      return state.carSpendingList;
     },
   },
   actions: {
@@ -36,6 +56,21 @@ export default {
     },
     editYear({ commit }, { year }) {
       commit('setYear', year);
+    },
+    createSpending({ commit }, { spendingName, spendingYear, spendingPrice }) {
+      const data = { year: spendingYear, price: spendingPrice };
+      if (spendingName === '家') {
+        commit('setHomeSpendingList', data);
+      } else {
+        commit('setCarSpendingList', data);
+      }
+    },
+    deleteSpending({ commit }, { deleteName, deleteIndex }) {
+      if (deleteName === 'home') {
+        commit('deleteHomeSpendingList', deleteIndex);
+      } else {
+        commit('deleteCarSpendingList', deleteIndex);
+      }
     },
   },
 };
