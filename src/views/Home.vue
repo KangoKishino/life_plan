@@ -35,22 +35,36 @@
         </tbody>
       </table>
       <button type="button" @click="toIncomeEdit">収入の登録</button>
-      <table>
-        <thead>
-          <tr>
-            <th>収入</th>
-            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
-            <td>{{ family.name }}</td>
-            <td v-for="n of 10" :key="n">
-              {{ calculateIncome(family.name, parseInt(startYear) + n - 1) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="box-container">
+        <table class="margin">
+          <thead>
+            <tr>
+              <th>収入</th>
+              <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
+              <td>{{ family.name }}</td>
+              <td v-for="n of 10" :key="n">
+                {{ calculateIncome(family.name, parseInt(startYear) + n - 1, index, n) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table>
+          <thead>
+            <tr>
+              <th>収入合計</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(income, index) in this.totalIncome" :key="index">
+              <td>{{ totalIncome[index].toFixed(1) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
@@ -130,6 +144,7 @@ export default {
       showEditYear: false,
       family: [],
       startYear: this.$store.getters.startYear,
+      totalIncome: [],
     };
   },
   methods: {
@@ -159,17 +174,28 @@ export default {
       }
       return;
     },
-    calculateIncome(name, year) {
+    calculateIncome(name, year, index, n) {
+      if (index === 0 && n === 1) {
+        this.totalIncome = [0];
+      } else if (n === 1) {
+        this.totalIncome.push(0);
+      }
       let list = {};
+      // 収入のある人を見つけたら抜き出し
       for (const incomeList of this.$store.getters.incomeList) {
         if (incomeList.name === name) {
           list = incomeList;
           break;
         }
       }
+      if (Object.keys(list).length === 0) return 0;
       const elapsedYear = year - list.year;
       if (elapsedYear < 0) return 0;
-      return (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
+      const income = (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
+      console.log(income);
+      this.totalIncome[index] += Number(income);
+      console.log(this.totalIncome);
+      return income;
     },
   },
 };
@@ -178,11 +204,19 @@ export default {
 <style scoped>
 table,
 td,
-th {
+th,
+td {
   border: 1px solid #333;
   border-collapse: collapse;
 }
 th {
   width: 100px;
+}
+
+.box-container {
+  display: flex;
+}
+.margin {
+  margin-right: 5px;
 }
 </style>
