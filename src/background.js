@@ -6,6 +6,7 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+// import Datastore from 'nedb';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Scheme must be registered before the app is ready
@@ -99,4 +100,23 @@ ipcMain.on('print-to-pdf', (event, arg) => {
     .catch(error => {
       console.log(error);
     });
+});
+
+ipcMain.on('getPage', async event => {
+  const Datastore = require('nedb');
+  const file = path.join(app.getPath('userData'), './family.nedb');
+  const db = new Datastore({ filename: file, autoload: true });
+  await db.find({}, (error, docs) => {
+    event.sender.send('getPage', docs);
+  });
+});
+
+ipcMain.handle('createFamily', (event, arg) => {
+  const Datastore = require('nedb');
+  const file = path.join(app.getPath('userData'), './family.nedb');
+  const db = new Datastore({ filename: file, autoload: true });
+  console.log(file);
+  // データを挿入
+  db.insert(arg);
+  return;
 });
