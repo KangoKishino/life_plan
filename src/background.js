@@ -1,8 +1,12 @@
 'use strict';
 
-import { app, protocol, BrowserWindow } from 'electron';
+import { app, protocol, BrowserWindow, ipcMain, shell } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+// import Datastore from 'nedb';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Scheme must be registered before the app is ready
@@ -78,3 +82,41 @@ if (isDevelopment) {
     });
   }
 }
+
+ipcMain.on('print-to-pdf', (event, arg) => {
+  // 作成するPDFの保存パスを指定
+  const pdfPath = path.join(os.tmpdir(), arg + '.pdf');
+  const win = BrowserWindow.fromWebContents(event.sender);
+  // Electronデフォルトで使用できるprintToPDFを使用する
+  win.webContents
+    .printToPDF({})
+    .then(data => {
+      fs.writeFile(pdfPath, data, err => {
+        if (err) return console.log(err.message);
+        shell.openExternal('file://' + pdfPath);
+        event.sender.send('wrote-pdf', pdfPath);
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
+});
+
+ipcMain.on('getPage', async event => {
+  const Datastore = require('nedb');
+  const file = path.join(app.getPath('userData'), './family.nedb');
+  const db = new Datastore({ filename: file, autoload: true });
+  await db.find({}, (error, docs) => {
+    event.sender.send('getPage', docs);
+  });
+});
+
+ipcMain.handle('createFamily', (event, arg) => {
+  const Datastore = require('nedb');
+  const file = path.join(app.getPath('userData'), './family.nedb');
+  const db = new Datastore({ filename: file, autoload: true });
+  console.log(file);
+  // データを挿入
+  db.insert(arg);
+  return;
+});

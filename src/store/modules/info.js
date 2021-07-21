@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 const date = new Date();
 
 export default {
@@ -59,8 +60,12 @@ export default {
     },
   },
   actions: {
+    getPage() {
+      ipcRenderer.send('getPage');
+    },
     createFamily({ commit }, { familyName, familyBirthday }) {
       const data = { name: familyName, birthday: familyBirthday };
+      ipcRenderer.invoke('createFamily', data);
       commit('setFamily', data);
     },
     deleteFamily({ commit }, { deleteIndex }) {

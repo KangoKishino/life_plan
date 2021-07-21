@@ -1,6 +1,7 @@
 <template>
   <div class="home">
     <div class="container">
+      <button type="button" @click="createPDF">PDF出力</button>
       <div>{{ this.startYear }}年から10年間のライフイベント</div>
       <button type="button" @click="openEditYear">変更</button>
       <Chart :chartData="chartItems" :options="chartOptions" />
@@ -13,7 +14,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
+          <tr v-for="(family, index) in this.family" :key="index">
             <td>{{ family.name }}</td>
             <td v-for="n of 10" :key="n">{{ calculateAge(family.birthday, n - 1) }}</td>
           </tr>
@@ -44,7 +45,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(family, index) in this.$store.getters.familyList" :key="index">
+            <tr v-for="(family, index) in this.family" :key="index">
               <td>{{ family.name }}</td>
               <td v-for="n of 10" :key="n">
                 {{ calculateIncome(family.name, parseInt(startYear) + n - 1, index, n) }}
@@ -82,6 +83,7 @@ import { Bar } from 'vue-chartjs';
 import Chart from './ChartBox.js';
 import moment from 'moment';
 import ModalWindow from '@/components/ModalWindow';
+import { ipcRenderer } from 'electron';
 
 export default {
   extends: Bar,
@@ -147,6 +149,9 @@ export default {
       totalIncome: [],
     };
   },
+  created() {
+    this.$store.dispatch('getPage');
+  },
   methods: {
     openEditYear() {
       this.showEditYear = true;
@@ -197,6 +202,20 @@ export default {
       console.log(this.totalIncome);
       return income;
     },
+    createPDF() {
+      const pdfname = 'mypdf';
+      ipcRenderer.send('print-to-pdf', pdfname);
+    },
+  },
+  mounted() {
+    // mountでメインプロセスからのIPC通信待機
+    ipcRenderer.on('wrote-pdf', (event, path) => {
+      const msg = `PDFを ${path} に作成しました。`;
+      console.log(msg);
+    });
+    ipcRenderer.on('getPage', (event, docs) => {
+      this.family = docs;
+    });
   },
 };
 </script>
