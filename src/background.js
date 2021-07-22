@@ -82,7 +82,10 @@ if (isDevelopment) {
     });
   }
 }
+const Datastore = require('nedb');
 
+const file = path.join(app.getPath('userData'), './family.nedb');
+const db = new Datastore({ filename: file, autoload: true });
 ipcMain.on('print-to-pdf', (event, arg) => {
   // 作成するPDFの保存パスを指定
   const pdfPath = path.join(os.tmpdir(), arg + '.pdf');
@@ -102,21 +105,13 @@ ipcMain.on('print-to-pdf', (event, arg) => {
     });
 });
 
-ipcMain.on('getPage', async event => {
-  const Datastore = require('nedb');
-  const file = path.join(app.getPath('userData'), './family.nedb');
-  const db = new Datastore({ filename: file, autoload: true });
-  await db.find({}, (error, docs) => {
+ipcMain.on('getPage', event => {
+  db.find({}, (error, docs) => {
     event.sender.send('getPage', docs);
   });
 });
 
-ipcMain.handle('createFamily', (event, arg) => {
-  const Datastore = require('nedb');
-  const file = path.join(app.getPath('userData'), './family.nedb');
-  const db = new Datastore({ filename: file, autoload: true });
-  console.log(file);
-  // データを挿入
-  db.insert(arg);
+ipcMain.handle('createFamily', async (event, arg) => {
+  await db.insert(arg);
   return;
 });

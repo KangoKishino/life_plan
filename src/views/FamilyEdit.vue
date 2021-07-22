@@ -1,7 +1,7 @@
 <template>
   <div class="family-edit">
     <div class="container">
-      <div v-for="(family, index) in this.$store.getters.familyList" :key="index">
+      <div v-for="(family, index) in this.family" :key="index">
         <div>{{ family.name }}</div>
         <div>{{ family.birthday }}</div>
         <button type="button" @click="openEditFamily()">編集</button>
@@ -37,6 +37,7 @@
 <script>
 // @ is an alias to /src
 import ModalWindow from '@/components/ModalWindow';
+import { ipcRenderer } from 'electron';
 
 export default {
   components: {
@@ -48,6 +49,9 @@ export default {
       showEditFamily: false,
       family: [],
     };
+  },
+  created() {
+    this.$store.dispatch('getPage');
   },
   methods: {
     openCreateFamily() {
@@ -80,6 +84,11 @@ export default {
         deleteIndex: index,
       });
     },
+  },
+  mounted() {
+    ipcRenderer.on('getPage', (event, docs) => {
+      this.family = docs;
+    });
   },
 };
 </script>

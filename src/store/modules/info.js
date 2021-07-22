@@ -63,10 +63,10 @@ export default {
     getPage() {
       ipcRenderer.send('getPage');
     },
-    createFamily({ commit }, { familyName, familyBirthday }) {
+    async createFamily({ dispatch }, { familyName, familyBirthday }) {
       const data = { name: familyName, birthday: familyBirthday };
-      ipcRenderer.invoke('createFamily', data);
-      commit('setFamily', data);
+      await ipcRenderer.invoke('createFamily', data);
+      dispatch('getPage');
     },
     deleteFamily({ commit }, { deleteIndex }) {
       commit('deleteFamily', deleteIndex);
