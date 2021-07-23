@@ -33,6 +33,10 @@
             <td>家</td>
             <td v-for="n of 10" :key="n">{{ spendingHome(parseInt(startYear) + n - 1) }}</td>
           </tr>
+          <tr>
+            <td>車</td>
+            <td v-for="n of 10" :key="n">{{ spendingCar(parseInt(startYear) + n - 1) }}</td>
+          </tr>
         </tbody>
       </table>
       <button type="button" @click="toIncomeEdit">収入の登録</button>
@@ -48,7 +52,7 @@
             <tr v-for="(family, index) in this.family" :key="index">
               <td>{{ family.name }}</td>
               <td v-for="n of 10" :key="n">
-                {{ calculateIncome(family.name, parseInt(startYear) + n - 1, index, n) }}
+                {{ calculateIncome(family._id, parseInt(startYear) + n - 1, index, n) }}
               </td>
             </tr>
           </tbody>
@@ -145,12 +149,17 @@ export default {
       },
       showEditYear: false,
       family: [],
+      homeSpendingList: [],
+      carSpendingList: [],
+      incomeList: [],
       startYear: this.$store.getters.startYear,
       totalIncome: [],
     };
   },
   created() {
     this.$store.dispatch('getPage');
+    this.$store.dispatch('getSpending');
+    this.$store.dispatch('getIncome');
   },
   methods: {
     openEditYear() {
@@ -172,14 +181,22 @@ export default {
       return `${this.startYear - moment(birthday).year() + n}歳`;
     },
     spendingHome(year) {
-      for (const home of this.$store.getters.homeSpendingList) {
+      for (const home of this.homeSpendingList) {
         if (parseInt(home.year) === year) {
           return home.price;
         }
       }
       return;
     },
-    calculateIncome(name, year, index, n) {
+    spendingCar(year) {
+      for (const car of this.carSpendingList) {
+        if (parseInt(car.year) === year) {
+          return car.price;
+        }
+      }
+      return;
+    },
+    calculateIncome(id, year, index, n) {
       if (index === 0 && n === 1) {
         this.totalIncome = [0];
       } else if (n === 1) {
@@ -187,8 +204,8 @@ export default {
       }
       let list = {};
       // 収入のある人を見つけたら抜き出し
-      for (const incomeList of this.$store.getters.incomeList) {
-        if (incomeList.name === name) {
+      for (const incomeList of this.incomeList) {
+        if (incomeList.family_id === id) {
           list = incomeList;
           break;
         }
@@ -197,9 +214,7 @@ export default {
       const elapsedYear = year - list.year;
       if (elapsedYear < 0) return 0;
       const income = (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
-      console.log(income);
       this.totalIncome[index] += Number(income);
-      console.log(this.totalIncome);
       return income;
     },
     createPDF() {
@@ -215,6 +230,20 @@ export default {
     });
     ipcRenderer.on('getPage', (event, docs) => {
       this.family = docs;
+    });
+    ipcRenderer.on('getSpending', (event, docs) => {
+      this.homeSpendingList = [];
+      this.carSpendingList = [];
+      docs.forEach(element => {
+        if (element.name === '家') {
+          this.homeSpendingList.push(element);
+        } else {
+          this.carSpendingList.push(element);
+        }
+      });
+    });
+    ipcRenderer.on('getIncome', (event, docs) => {
+      this.incomeList = docs;
     });
   },
 };
