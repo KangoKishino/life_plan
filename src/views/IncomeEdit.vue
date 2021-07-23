@@ -2,9 +2,9 @@
   <div class="income-edit">
     <div class="container">
       <h5>収入</h5>
-      <div v-for="(family, index) in this.$store.getters.familyList" :key="index">
+      <div v-for="(family, index) in this.family" :key="index">
         <div>{{ family.name }}</div>
-        <button type="button" @click="openEditIncome(family.name, index)">編集</button>
+        <button type="button" @click="openEditIncome(family._id)">編集</button>
       </div>
     </div>
     <ModalWindow @close="closeCreateSpending()" v-show="showEditIncome">
@@ -41,6 +41,7 @@
 <script>
 // @ is an alias to /src
 import ModalWindow from '@/components/ModalWindow';
+import { ipcRenderer } from 'electron';
 
 export default {
   components: {
@@ -49,17 +50,29 @@ export default {
   data() {
     return {
       showEditIncome: false,
-      startYear: this.$store.getters.startYear,
+      startYear: 0,
       income: 0,
       rate: 0,
       selectedPerson: '',
       id: '',
+      family: [],
+      incomeList: [],
     };
   },
+  created() {
+    this.$store.dispatch('getPage');
+    this.$store.dispatch('getIncome');
+  },
   methods: {
-    openEditIncome(name, index) {
-      this.selectedPerson = name;
-      this.id = index;
+    openEditIncome(id) {
+      this.incomeList.forEach(income => {
+        if (income.family_id === id) {
+          this.id = income._id;
+          this.income = income.income;
+          this.rate = income.rate;
+          this.startYear = income.year;
+        }
+      });
       this.showEditIncome = true;
     },
     closeEditIncome() {
@@ -68,7 +81,7 @@ export default {
     editIncome() {
       this.$store
         .dispatch('editIncome', {
-          name: this.selectedPerson,
+          id: this.id,
           year: parseInt(this.startYear),
           income: parseInt(this.income),
           rate: parseInt(this.rate),
@@ -80,6 +93,14 @@ export default {
           console.log('error');
         });
     },
+  },
+  mounted() {
+    ipcRenderer.on('getPage', (event, docs) => {
+      this.family = docs;
+    });
+    ipcRenderer.on('getIncome', (event, docs) => {
+      this.incomeList = docs;
+    });
   },
 };
 </script>

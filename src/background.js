@@ -83,9 +83,13 @@ if (isDevelopment) {
   }
 }
 const Datastore = require('nedb');
+const familyFile = path.join(app.getPath('userData'), './family.nedb');
+const spendingFile = path.join(app.getPath('userData'), './spending.nedb');
+const incomeFile = path.join(app.getPath('userData'), './income.nedb');
+const familyDB = new Datastore({ filename: familyFile, autoload: true });
+const spendingDB = new Datastore({ filename: spendingFile, autoload: true });
+const incomeDB = new Datastore({ filename: incomeFile, autoload: true });
 
-const file = path.join(app.getPath('userData'), './family.nedb');
-const db = new Datastore({ filename: file, autoload: true });
 ipcMain.on('print-to-pdf', (event, arg) => {
   // 作成するPDFの保存パスを指定
   const pdfPath = path.join(os.tmpdir(), arg + '.pdf');
@@ -106,12 +110,95 @@ ipcMain.on('print-to-pdf', (event, arg) => {
 });
 
 ipcMain.on('getPage', event => {
-  db.find({}, (error, docs) => {
+  familyDB.find({}, (error, docs) => {
     event.sender.send('getPage', docs);
+  });
+});
+ipcMain.on('getSpending', event => {
+  spendingDB.find({}, (error, docs) => {
+    event.sender.send('getSpending', docs);
+  });
+});
+ipcMain.on('getIncome', event => {
+  incomeDB.find({}, (error, docs) => {
+    event.sender.send('getIncome', docs);
   });
 });
 
 ipcMain.handle('createFamily', async (event, arg) => {
-  await db.insert(arg);
+  await familyDB.insert(arg, (error, newFamily) => {
+    const date = new Date();
+    const data = { family_id: newFamily._id, year: date.getFullYear(), income: 0, rate: 0 };
+    incomeDB.insert(data);
+  });
+  return;
+});
+
+ipcMain.handle('createSpending', async (event, arg) => {
+  await spendingDB.insert(arg);
+  return;
+});
+
+ipcMain.handle('createIncome', async (event, arg) => {
+  await incomeDB.insert(arg);
+  return;
+});
+
+ipcMain.handle('editFamily', async (event, arg) => {
+  const update = {
+    $set: {
+      name: arg.name,
+      birthday: arg.birthday,
+    },
+  };
+  await familyDB.update({ _id: arg.id }, update, () => {
+    return;
+  });
+  return;
+});
+
+ipcMain.handle('editSpending', async (event, arg) => {
+  const update = {
+    $set: {
+      name: arg.name,
+      year: arg.year,
+      price: arg.price,
+    },
+  };
+  await spendingDB.update({ _id: arg.id }, update, () => {
+    return;
+  });
+  return;
+});
+
+ipcMain.handle('editIncome', async (event, arg) => {
+  const update = {
+    $set: {
+      year: arg.year,
+      income: arg.income,
+      rate: arg.rate,
+    },
+  };
+  await incomeDB.update({ _id: arg.id }, update, () => {
+    return;
+  });
+  return;
+});
+
+ipcMain.handle('deleteFamily', async (event, arg) => {
+  await familyDB.remove({ _id: arg }, {}, () => {
+    incomeDB.remove({ family_id: arg }, {}, () => {
+      return;
+    });
+    return;
+  });
+  return;
+});
+
+ipcMain.handle('deleteSpending', async (event, arg) => {
+  console.log(arg);
+  await spendingDB.remove({ _id: arg }, {}, () => {
+    return;
+  });
   return;
 });
