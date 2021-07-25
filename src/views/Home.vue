@@ -4,7 +4,12 @@
       <button type="button" @click="createPDF">PDF出力</button>
       <div>{{ this.startYear }}年から10年間のライフイベント</div>
       <button type="button" @click="openEditYear">変更</button>
-      <Chart :chartData="chartItems" :options="chartOptions" />
+      <ChartData
+        :year="startYear"
+        :income="incomeList"
+        :homeSpending="homeSpendingList"
+        :carSpending="carSpendingList"
+      />
       <button type="button" @click="toFamilyEdit">作成</button>
       <table>
         <thead>
@@ -73,7 +78,7 @@
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
-      <div><input type="number" v-model="startYear" />年</div>
+      <div><input type="number" v-model.number="startYear" />年</div>
       <template slot="footer">
         <button @click="closeEditYear()">閉じる</button>
       </template>
@@ -83,70 +88,20 @@
 
 <script>
 // @ is an alias to /src
-import { Bar } from 'vue-chartjs';
-import Chart from './ChartBox.js';
+// import { Bar } from 'vue-chartjs';
 import moment from 'moment';
 import ModalWindow from '@/components/ModalWindow';
+import ChartData from '@/components/ChartData';
 import { ipcRenderer } from 'electron';
 
 export default {
-  extends: Bar,
+  // extends: Bar,
   components: {
-    Chart,
+    ChartData,
     ModalWindow,
   },
   data() {
     return {
-      chartItems: {
-        labels: [
-          '12月',
-          '1月',
-          '2月',
-          '3月',
-          '4月',
-          '5月',
-          '6月',
-          '7月',
-          '8月',
-          '9月',
-          '10月',
-          '11月',
-        ],
-        datasets: [
-          {
-            label: '月ごとの点数',
-            data: [95, 70, 80, 65, 69, 80, 100, 100, 72, 81, 45, 70],
-            backgroundColor: 'lightblue',
-          },
-        ],
-      },
-      chartOptions: {
-        maintainAspectRatio: false,
-        scales: {
-          xAxes: [
-            {
-              display: true,
-              // X軸グリッド非表示
-              gridLines: {
-                display: false,
-              },
-            },
-          ],
-          // Y軸
-          yAxes: [
-            {
-              display: true,
-              position: 'right',
-              ticks: {
-                // 0から始まる
-                beginAtZero: true,
-                // 最大5目盛
-                maxTicksLimit: 5,
-              },
-            },
-          ],
-        },
-      },
       showEditYear: false,
       family: [],
       homeSpendingList: [],
