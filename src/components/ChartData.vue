@@ -2,13 +2,12 @@
 import { Bar, mixins } from 'vue-chartjs';
 
 export default {
-  extends: Bar,
-  mixins: [mixins.reactiveData],
+  // extends: Bar,
+  mixins: [Bar, mixins.reactiveData],
   props: {
-    year: Number,
-    income: Array,
-    homeSpending: Array,
-    carSpending: Array,
+    summarizeData: {
+      type: Object,
+    },
   },
   data() {
     return {
@@ -42,40 +41,32 @@ export default {
     };
   },
   mounted() {
-    // this.renderChart(this.chartdata, this.options);
     this.render();
-  },
-  watch: {
-    year() {
-      this.render();
-    },
-    income() {
-      this.render();
-    },
-    homeSpending() {
-      this.render();
-    },
-    carSpending() {
-      this.render();
-    },
   },
   methods: {
     render() {
+      let newList = this.createSavings();
       this.chartData = {
-        labels: this.createYearList(),
+        labels: this.summarizeData.year,
         datasets: [
           {
             label: '収支',
-            data: [95, 70, 80, 65, 69, 80, 100, -100, 72, 81, 45, 70],
+            data: newList,
             backgroundColor: 'lightblue',
           },
         ],
       };
+      let chartData = JSON.parse(JSON.stringify(this.chartData));
+      this.chartData = chartData;
     },
-    createYearList() {
+    createSavings() {
       let list = [];
       for (let i = 0; i < 10; i++) {
-        list.push(this.year + i);
+        const saving =
+          this.summarizeData.income[i] -
+          this.summarizeData.carSpending[i] -
+          this.summarizeData.homeSpending[i];
+        list.push(saving);
       }
       return list;
     },
