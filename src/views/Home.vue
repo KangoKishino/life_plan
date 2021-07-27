@@ -4,7 +4,7 @@
       <button type="button" @click="createPDF">PDF出力</button>
       <div>{{ this.startYear }}年から10年間のライフイベント</div>
       <button type="button" @click="openEditYear">変更</button>
-      <Chart :chartData="chartItems" :options="chartOptions" />
+      <ChartData :summarizeData="summarizeData" :key="changeTrigger" />
       <button type="button" @click="toFamilyEdit">作成</button>
       <table>
         <thead>
@@ -52,7 +52,7 @@
             <tr v-for="(family, index) in this.family" :key="index">
               <td>{{ family.name }}</td>
               <td v-for="n of 10" :key="n">
-                {{ calculateIncome(family._id, parseInt(startYear) + n - 1, index, n) }}
+                {{ calculateIncome(family._id, parseInt(startYear) + n - 1) }}
               </td>
             </tr>
           </tbody>
@@ -64,8 +64,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(income, index) in this.totalIncome" :key="index">
-              <td>{{ totalIncome[index].toFixed(1) }}</td>
+            <tr>
+              <td>{{ totalIncome.toFixed(1) }}</td>
             </tr>
           </tbody>
         </table>
@@ -73,7 +73,7 @@
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
-      <div><input type="number" v-model="startYear" />年</div>
+      <div><input type="number" v-model.number="startYear" />年</div>
       <template slot="footer">
         <button @click="closeEditYear()">閉じる</button>
       </template>
@@ -83,85 +83,56 @@
 
 <script>
 // @ is an alias to /src
-import { Bar } from 'vue-chartjs';
-import Chart from './ChartBox.js';
 import moment from 'moment';
 import ModalWindow from '@/components/ModalWindow';
+import ChartData from '@/components/ChartData';
 import { ipcRenderer } from 'electron';
 
 export default {
-  extends: Bar,
   components: {
-    Chart,
+    ChartData,
     ModalWindow,
   },
   data() {
     return {
-      chartItems: {
-        labels: [
-          '12月',
-          '1月',
-          '2月',
-          '3月',
-          '4月',
-          '5月',
-          '6月',
-          '7月',
-          '8月',
-          '9月',
-          '10月',
-          '11月',
-        ],
-        datasets: [
-          {
-            label: '月ごとの点数',
-            data: [95, 70, 80, 65, 69, 80, 100, 100, 72, 81, 45, 70],
-            backgroundColor: 'lightblue',
-          },
-        ],
-      },
-      chartOptions: {
-        maintainAspectRatio: false,
-        scales: {
-          xAxes: [
-            {
-              display: true,
-              // X軸グリッド非表示
-              gridLines: {
-                display: false,
-              },
-            },
-          ],
-          // Y軸
-          yAxes: [
-            {
-              display: true,
-              position: 'right',
-              ticks: {
-                // 0から始まる
-                beginAtZero: true,
-                // 最大5目盛
-                maxTicksLimit: 5,
-              },
-            },
-          ],
-        },
-      },
       showEditYear: false,
       family: [],
       homeSpendingList: [],
       carSpendingList: [],
       incomeList: [],
       startYear: this.$store.getters.startYear,
-      totalIncome: [],
+      totalIncome: 0,
+      summarizeData: {
+        year: [],
+        income: [],
+        carSpending: [],
+        homeSpending: [],
+      },
+      changeTrigger: 0,
     };
   },
+  watch: {
+    startYear() {
+      console.log('startyear changed');
+      this.createYearList();
+      this.$store.dispatch('getPage');
+      this.$store.dispatch('getSpending');
+      this.$store.dispatch('getIncome');
+    },
+  },
   created() {
+    this.createYearList();
     this.$store.dispatch('getPage');
     this.$store.dispatch('getSpending');
     this.$store.dispatch('getIncome');
   },
   methods: {
+    createYearList() {
+      this.summarizeData.year = [];
+      for (let i = 0; i < 10; i++) {
+        this.summarizeData.year.push(this.startYear + i);
+      }
+    },
     openEditYear() {
       this.showEditYear = true;
     },
@@ -196,12 +167,7 @@ export default {
       }
       return;
     },
-    calculateIncome(id, year, index, n) {
-      if (index === 0 && n === 1) {
-        this.totalIncome = [0];
-      } else if (n === 1) {
-        this.totalIncome.push(0);
-      }
+    calculateIncome(id, year) {
       let list = {};
       // 収入のある人を見つけたら抜き出し
       for (const incomeList of this.incomeList) {
@@ -214,7 +180,6 @@ export default {
       const elapsedYear = year - list.year;
       if (elapsedYear < 0) return 0;
       const income = (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
-      this.totalIncome[index] += Number(income);
       return income;
     },
     createPDF() {
@@ -234,6 +199,8 @@ export default {
     ipcRenderer.on('getSpending', (event, docs) => {
       this.homeSpendingList = [];
       this.carSpendingList = [];
+      this.summarizeData.homeSpending = Array(10).fill(0);
+      this.summarizeData.carSpending = Array(10).fill(0);
       docs.forEach(element => {
         if (element.name === '家') {
           this.homeSpendingList.push(element);
@@ -241,9 +208,47 @@ export default {
           this.carSpendingList.push(element);
         }
       });
+      for (let i = 0; i < 10; i++) {
+        docs.forEach(element => {
+          if (this.summarizeData.year[i] === element.year && element.name === '家') {
+            this.summarizeData.homeSpending.splice(
+              i,
+              1,
+              Number(element.price) + this.summarizeData.homeSpending[i]
+            );
+          } else if (this.summarizeData.year[i] === element.year && element.name === '車') {
+            this.summarizeData.carSpending.splice(
+              i,
+              1,
+              Number(element.price) + this.summarizeData.carSpending[i]
+            );
+          }
+        });
+      }
     });
     ipcRenderer.on('getIncome', (event, docs) => {
       this.incomeList = docs;
+      let tentativeIncome = Array(10).fill(0);
+      docs.forEach(element => {
+        const list = this.summarizeData.year.concat();
+        for (let i = 0; i < 10; i++) {
+          list.splice(i, 1, list[i] - element.year);
+        }
+        for (let i = 0; i < 10; i++) {
+          if (list[i] >= 0) {
+            const income = (
+              tentativeIncome[i] +
+              element.income * (element.rate / 100 + 1) ** list[i]
+            ).toFixed(2);
+            tentativeIncome.splice(i, 1, Number(income));
+          }
+        }
+      });
+      this.summarizeData.income = tentativeIncome;
+      this.totalIncome = tentativeIncome.reduce((sum, element) => {
+        return sum + element;
+      }, 0);
+      this.changeTrigger++;
     });
   },
 };

@@ -36,13 +36,13 @@
         <tr>
           <td>指定年</td>
           <td>
-            <div><input type="number" v-model="purchaseYear" /></div>
+            <div><input type="number" v-model.number="purchaseYear" /></div>
           </td>
         </tr>
         <tr>
           <td>金額</td>
           <td>
-            <div><input type="number" v-model="purchasePrice" /></div>
+            <div><input type="number" v-model.number="purchasePrice" /></div>
           </td>
         </tr>
       </table>
@@ -70,13 +70,13 @@
         <tr>
           <td>指定年</td>
           <td>
-            <div><input type="number" v-model="purchaseYear" /></div>
+            <div><input type="number" v-model.number="purchaseYear" /></div>
           </td>
         </tr>
         <tr>
           <td>金額</td>
           <td>
-            <div><input type="number" v-model="purchasePrice" /></div>
+            <div><input type="number" v-model.number="purchasePrice" /></div>
           </td>
         </tr>
       </table>
