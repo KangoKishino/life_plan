@@ -4,59 +4,17 @@ const date = new Date();
 export default {
   state() {
     return {
-      familyList: [],
       startYear: date.getFullYear(),
-      homeSpendingList: [],
-      carSpendingList: [],
-      incomeList: [],
     };
   },
   mutations: {
-    setFamily(state, family) {
-      state.familyList.push(family);
-    },
-    deleteFamily(state, index) {
-      state.familyList.splice(index, 1);
-    },
     setYear(state, year) {
       state.startYear = year;
     },
-    setHomeSpendingList(state, data) {
-      state.homeSpendingList.push(data);
-    },
-    setCarSpendingList(state, data) {
-      state.carSpendingList.push(data);
-    },
-    deleteHomeSpendingList(state, index) {
-      state.homeSpendingList.splice(index, 1);
-    },
-    deleteCarSpendingList(state, index) {
-      state.carSpendingList.splice(index, 1);
-    },
-    setIncome(state, data) {
-      state.incomeList.forEach((element, index) => {
-        if (element.name === data.name) {
-          state.incomeList.splice(index, 1);
-        }
-      });
-      state.incomeList.push(data);
-    },
   },
   getters: {
-    familyList(state) {
-      return state.familyList;
-    },
     startYear(state) {
       return state.startYear;
-    },
-    homeSpendingList(state) {
-      return state.homeSpendingList;
-    },
-    carSpendingList(state) {
-      return state.carSpendingList;
-    },
-    incomeList(state) {
-      return state.incomeList;
     },
   },
   actions: {
