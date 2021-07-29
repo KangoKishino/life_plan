@@ -36,13 +36,19 @@
         <tr>
           <td>指定年</td>
           <td>
-            <div><input type="number" v-model.number="purchaseYear" /></div>
+            <div>
+              <input type="number" v-model.number="purchaseYear" />
+              <p class="error" v-show="error.year">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
         <tr>
           <td>金額</td>
           <td>
-            <div><input type="number" v-model.number="purchasePrice" /></div>
+            <div>
+              <input type="number" v-model.number="purchasePrice" />
+              <p class="error" v-show="error.price">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
       </table>
@@ -64,19 +70,26 @@
                   {{ option }}
                 </option>
               </select>
+              <p class="error" v-show="error.name">{{ error.message }}</p>
             </div>
           </td>
         </tr>
         <tr>
           <td>指定年</td>
           <td>
-            <div><input type="number" v-model.number="purchaseYear" /></div>
+            <div>
+              <input type="number" v-model.number="purchaseYear" />
+              <p class="error" v-show="error.year">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
         <tr>
           <td>金額</td>
           <td>
-            <div><input type="number" v-model.number="purchasePrice" /></div>
+            <div>
+              <input type="number" v-model.number="purchasePrice" />
+              <p class="error" v-show="error.price">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
       </table>
@@ -102,13 +115,19 @@ export default {
     return {
       showCreateSpending: false,
       showEditSpending: false,
-      selectedSpending: '',
+      selectedSpending: '家',
       options: ['家', '車'],
       purchasePrice: 0,
       purchaseYear: this.$store.getters.startYear,
       homeSpendingList: [],
       carSpendingList: [],
       id: [],
+      error: {
+        name: false,
+        year: false,
+        price: false,
+        message: '',
+      },
     };
   },
   created() {
@@ -126,11 +145,39 @@ export default {
     },
     closeCreateSpending() {
       this.showCreateSpending = false;
+      this.error.name = false;
+      this.error.year = false;
+      this.error.price = false;
+      this.error.message = '';
     },
     closeEditSpending() {
       this.showEditSpending = false;
+      this.error.name = false;
+      this.error.year = false;
+      this.error.price = false;
+      this.error.message = '';
     },
     createSpending() {
+      if (!this.selectedSpending) {
+        this.error.name = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (!this.purchaseYear) {
+        this.error.year = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (this.purchaseYear > 1900 && this.purchaseYear < 2100) {
+        this.error.year = true;
+        this.error.message = '適切な年を入力してください';
+        return;
+      } else if (!this.purchasePrice) {
+        this.error.price = true;
+        this.error.message = '必須項目です';
+      } else if (this.purchasePrice < 0) {
+        this.error.price = true;
+        this.error.message = '正の数を入力してください';
+        return;
+      }
       this.$store
         .dispatch('createSpending', {
           spendingName: this.selectedSpending,
@@ -180,3 +227,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.error {
+  color: red;
+}
+</style>

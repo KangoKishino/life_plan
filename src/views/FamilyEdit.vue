@@ -15,13 +15,19 @@
         <tr>
           <td>名前</td>
           <td>
-            <div><input type="text" v-model="inputFamily.name" requir /></div>
+            <div>
+              <input type="text" v-model="inputFamily.name" />
+              <p class="error" v-show="error.name">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
         <tr>
           <td>生年月日</td>
           <td>
-            <div><input type="date" v-model="inputFamily.birthday" required /></div>
+            <div>
+              <input type="date" v-model="inputFamily.birthday" />
+              <p class="error" v-show="error.birthday">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
       </table>
@@ -37,13 +43,19 @@
         <tr>
           <td>名前</td>
           <td>
-            <div><input type="text" v-model="inputFamily.name" required /></div>
+            <div>
+              <input type="text" v-model="inputFamily.name" />
+              <p class="error" v-show="error.name">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
         <tr>
           <td>生年月日</td>
           <td>
-            <div><input type="date" v-model="inputFamily.birthday" required /></div>
+            <div>
+              <input type="date" v-model="inputFamily.birthday" />
+              <p class="error" v-show="error.birthday">{{ error.message }}</p>
+            </div>
           </td>
         </tr>
       </table>
@@ -70,9 +82,17 @@ export default {
       showCreateFamily: false,
       showEditFamily: false,
       familyList: [],
-      inputFamily: [],
+      inputFamily: {
+        name: '',
+        birthday: '',
+      },
       family: [],
       id: '',
+      error: {
+        name: false,
+        birthday: false,
+        message: '',
+      },
     };
   },
   created() {
@@ -92,12 +112,36 @@ export default {
     },
     closeCreateFamily() {
       this.family = [];
+      this.error.name = false;
+      this.error.birthday = false;
       this.showCreateFamily = false;
     },
     closeEditFamily() {
+      this.error.name = false;
+      this.error.birthday = false;
       this.showEditFamily = false;
     },
     createFamily() {
+      const minDate = new Date('1990-01-01');
+      const maxDate = new Date('2100-01-01');
+      const birthday = new Date(this.inputFamily.birthday);
+      if (!this.inputFamily.name) {
+        this.error.name = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (this.inputFamily.name.length > 20) {
+        this.error.name = true;
+        this.error.message = '最大文字数は20文字です';
+        return;
+      } else if (!this.inputFamily.birthday) {
+        this.error.birthday = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (minDate.valueOf() > birthday.valueOf() || maxDate.valueOf() < birthday.valueOf) {
+        this.error.birthday = true;
+        this.error.message = '正しい生年月日を入力してください';
+        return;
+      }
       this.$store
         .dispatch('createFamily', {
           familyName: this.inputFamily.name,
@@ -128,3 +172,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.error {
+  color: red;
+}
+</style>

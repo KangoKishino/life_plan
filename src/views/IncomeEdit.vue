@@ -13,19 +13,22 @@
         <tr>
           <td>開始年</td>
           <td>
-            <div><input type="number" v-model="startYear" /></div>
+            <div><input type="number" v-model.number="startYear" /></div>
+            <p class="error" v-show="error.year">{{ error.message }}</p>
           </td>
         </tr>
         <tr>
           <td>年収</td>
           <td>
-            <div><input type="number" v-model="income" /></div>
+            <div><input type="number" v-model.number="income" /></div>
+            <p class="error" v-show="error.income">{{ error.message }}</p>
           </td>
         </tr>
         <tr>
           <td>上昇率</td>
           <td>
-            <div><input type="number" v-model="rate" />%</div>
+            <div><input type="number" v-model.number="rate" />%</div>
+            <p class="error" v-show="error.rate">{{ error.message }}</p>
           </td>
         </tr>
       </table>
@@ -57,6 +60,12 @@ export default {
       id: '',
       family: [],
       incomeList: [],
+      error: {
+        year: false,
+        income: false,
+        rate: false,
+        message: '',
+      },
     };
   },
   created() {
@@ -77,8 +86,40 @@ export default {
     },
     closeEditIncome() {
       this.showEditIncome = false;
+      this.error.year = false;
+      this.error.income = false;
+      this.error.rate = false;
     },
     editIncome() {
+      if (!this.startYear) {
+        this.error.year = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (typeof this.startYear !== 'number') {
+        this.error.year = true;
+        this.error.message = '数値を入力してください';
+        return;
+      } else if (this.startYear < 0) {
+        this.error.year = true;
+        this.error.message = '正の数を入力してください';
+        return;
+      } else if (!this.income) {
+        this.error.income = true;
+        this.error.message = '必須項目です';
+        return;
+      } else if (typeof this.income !== 'number') {
+        this.error.income = true;
+        this.error.message = '数値を入力してください';
+        return;
+      } else if (this.income < 0) {
+        this.error.income = true;
+        this.error.message = '正の数を入力してください';
+        return;
+      } else if (typeof this.rate !== 'number') {
+        this.error.rate = true;
+        this.error.message = '数値を入力してください';
+        return;
+      }
       this.$store
         .dispatch('editIncome', {
           id: this.id,
@@ -104,3 +145,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.error {
+  color: red;
+}
+</style>
