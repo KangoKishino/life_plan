@@ -4,10 +4,10 @@
       <div v-for="(family, index) in this.familyList" :key="index">
         <div>{{ family.name }}</div>
         <div>{{ family.birthday }}</div>
-        <button type="button" @click="openEditFamily(family)">編集</button>
-        <button type="button" @click="deleteFamily(family._id)">削除</button>
+        <Button @myClick="openEditFamily(family)" class="btn-primary" label="編集" />
+        <Button @myClick="deleteFamily(family._id)" class="btn-danger" label="削除" />
       </div>
-      <button type="button" @click="openCreateFamily">追加</button>
+      <Button @myClick="openCreateFamily" class="btn-primary" label="追加" />
     </div>
     <ModalWindow @close="closeCreateFamily()" v-show="showCreateFamily">
       <h6>家族を追加</h6>
@@ -17,7 +17,6 @@
           <td>
             <div>
               <input type="text" v-model="inputFamily.name" />
-              <p class="error" v-show="error.name">{{ error.message }}</p>
             </div>
           </td>
         </tr>
@@ -26,19 +25,22 @@
           <td>
             <div>
               <input type="date" v-model="inputFamily.birthday" />
-              <p class="error" v-show="error.birthday">{{ error.message }}</p>
             </div>
           </td>
         </tr>
       </table>
 
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <template slot="footer">
-        <button @click="createFamily()">決定</button>
-        <button @click="closeCreateFamily()">閉じる</button>
+        <Button @myClick="createFamily" class="btn-primary" label="決定" />
+        <Button @myClick="closeCreateFamily" class="btn-outline-primary" label="閉じる" />
       </template>
     </ModalWindow>
     <ModalWindow @close="closeEditFamily()" v-show="showEditFamily">
       <h6>家族を追加</h6>
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <table>
         <tr>
           <td>名前</td>
@@ -54,15 +56,16 @@
           <td>
             <div>
               <input type="date" v-model="inputFamily.birthday" />
-              <p class="error" v-show="error.birthday">{{ error.message }}</p>
             </div>
           </td>
         </tr>
       </table>
 
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <template slot="footer">
-        <button @click="editFamily()">決定</button>
-        <button @click="closeEditFamily()">閉じる</button>
+        <Button @myClick="editFamily" class="btn-primary" label="決定" />
+        <Button @myClick="closeEditFamily" class="btn-outline-primary" label="閉じる" />
       </template>
     </ModalWindow>
   </div>
@@ -70,12 +73,14 @@
 
 <script>
 // @ is an alias to /src
-import ModalWindow from '@/components/ModalWindow';
+import ModalWindow from '@/components/molecules/ModalWindow';
 import { ipcRenderer } from 'electron';
+import Button from '@/components/atoms/Button';
 
 export default {
   components: {
     ModalWindow,
+    Button,
   },
   data() {
     return {
@@ -89,8 +94,7 @@ export default {
       family: [],
       id: '',
       error: {
-        name: false,
-        birthday: false,
+        isError: false,
         message: '',
       },
     };
@@ -104,7 +108,6 @@ export default {
       this.showCreateFamily = true;
     },
     openEditFamily(family) {
-      console.log(family.name);
       this.id = family._id;
       this.inputFamily.name = family.name;
       this.inputFamily.birthday = family.birthday;
@@ -112,13 +115,11 @@ export default {
     },
     closeCreateFamily() {
       this.family = [];
-      this.error.name = false;
-      this.error.birthday = false;
       this.showCreateFamily = false;
+      this.error.isError = false;
     },
     closeEditFamily() {
-      this.error.name = false;
-      this.error.birthday = false;
+      this.error.isError = false;
       this.showEditFamily = false;
     },
     createFamily() {
@@ -126,19 +127,19 @@ export default {
       const maxDate = new Date('2100-01-01');
       const birthday = new Date(this.inputFamily.birthday);
       if (!this.inputFamily.name) {
-        this.error.name = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '名前は必須項目です';
         return;
       } else if (this.inputFamily.name.length > 20) {
-        this.error.name = true;
-        this.error.message = '最大文字数は20文字です';
+        this.error.isError = true;
+        this.error.message = '名前の最大文字数は20文字です';
         return;
       } else if (!this.inputFamily.birthday) {
-        this.error.birthday = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '生年月日は必須項目です';
         return;
       } else if (minDate.valueOf() > birthday.valueOf() || maxDate.valueOf() < birthday.valueOf) {
-        this.error.birthday = true;
+        this.error.isError = true;
         this.error.message = '正しい生年月日を入力してください';
         return;
       }
@@ -173,7 +174,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .error {
   color: red;
 }

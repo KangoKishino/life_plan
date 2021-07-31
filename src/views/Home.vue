@@ -1,81 +1,27 @@
 <template>
   <div class="home">
     <div class="container">
-      <button type="button" @click="createPDF">PDF出力</button>
+      <Button @myClick="createPDF" class="btn-primary" label="PDF出力" />
       <div>{{ this.startYear }}年から10年間のライフイベント</div>
-      <button type="button" @click="openEditYear">変更</button>
+      <Button @myClick="openEditYear" class="btn-primary" label="変更" />
       <ChartData :summarizeData="summarizeData" :key="changeTrigger" />
-      <button type="button" @click="toFamilyEdit">作成</button>
-      <table>
-        <thead>
-          <tr>
-            <th>名前</th>
-            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(family, index) in this.family" :key="index">
-            <td>{{ family.name }}</td>
-            <td v-for="n of 10" :key="n">{{ calculateAge(family.birthday, n - 1) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <button type="button" @click="toSpendingEdit">支出の登録</button>
-      <table>
-        <thead>
-          <tr>
-            <th>支出</th>
-            <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>家</td>
-            <td v-for="n of 10" :key="n">{{ spendingHome(parseInt(startYear) + n - 1) }}</td>
-          </tr>
-          <tr>
-            <td>車</td>
-            <td v-for="n of 10" :key="n">{{ spendingCar(parseInt(startYear) + n - 1) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <button type="button" @click="toIncomeEdit">収入の登録</button>
-      <div class="box-container">
-        <table class="margin">
-          <thead>
-            <tr>
-              <th>収入</th>
-              <th v-for="index of 10" :key="index">{{ parseInt(startYear) + index - 1 }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(family, index) in this.family" :key="index">
-              <td>{{ family.name }}</td>
-              <td v-for="n of 10" :key="n">
-                {{ calculateIncome(family._id, parseInt(startYear) + n - 1) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <table>
-          <thead>
-            <tr>
-              <th>収入合計</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{ totalIncome.toFixed(1) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Button @myClick="toFamilyEdit" class="btn-primary" label="作成" />
+      <FamilyTable :year="startYear" :family="family" :incomeList="incomeList" />
+      <Button @myClick="toSpendingEdit" class="btn-primary" label="支出の登録" />
+      <SpendingTable :year="startYear" :homeList="homeSpendingList" :carList="carSpendingList" />
+      <Button @myClick="toIncomeEdit" class="btn-primary" label="収入の登録" />
+      <IncomeTable
+        :year="startYear"
+        :family="family"
+        :incomeList="incomeList"
+        :totalIncome="totalIncome"
+      />
     </div>
     <ModalWindow @close="closeEditYear()" v-show="showEditYear">
       <h6>年の変更</h6>
       <div><input type="number" v-model.number="startYear" />年</div>
       <template slot="footer">
-        <button @click="closeEditYear()">閉じる</button>
+        <Button @myClick="closeEditYear()" class="btn-primary" label="閉じる" />
       </template>
     </ModalWindow>
   </div>
@@ -83,15 +29,22 @@
 
 <script>
 // @ is an alias to /src
-import moment from 'moment';
-import ModalWindow from '@/components/ModalWindow';
-import ChartData from '@/components/ChartData';
+import ModalWindow from '@/components/molecules/ModalWindow';
+import ChartData from '@/components/molecules/ChartData';
 import { ipcRenderer } from 'electron';
+import Button from '@/components/atoms/Button';
+import FamilyTable from '@/components/molecules/FamilyTable';
+import SpendingTable from '@/components/molecules/SpendingTable';
+import IncomeTable from '@/components/molecules/IncomeTable';
 
 export default {
   components: {
     ChartData,
     ModalWindow,
+    Button,
+    FamilyTable,
+    SpendingTable,
+    IncomeTable,
   },
   data() {
     return {
@@ -113,7 +66,6 @@ export default {
   },
   watch: {
     startYear() {
-      console.log('startyear changed');
       this.createYearList();
       this.$store.dispatch('getPage');
       this.$store.dispatch('getSpending');
@@ -147,40 +99,6 @@ export default {
     },
     toIncomeEdit() {
       this.$router.push({ name: 'IncomeEdit' });
-    },
-    calculateAge(birthday, n) {
-      return `${this.startYear - moment(birthday).year() + n}歳`;
-    },
-    spendingHome(year) {
-      for (const home of this.homeSpendingList) {
-        if (parseInt(home.year) === year) {
-          return home.price;
-        }
-      }
-      return;
-    },
-    spendingCar(year) {
-      for (const car of this.carSpendingList) {
-        if (parseInt(car.year) === year) {
-          return car.price;
-        }
-      }
-      return;
-    },
-    calculateIncome(id, year) {
-      let list = {};
-      // 収入のある人を見つけたら抜き出し
-      for (const incomeList of this.incomeList) {
-        if (incomeList.family_id === id) {
-          list = incomeList;
-          break;
-        }
-      }
-      if (Object.keys(list).length === 0) return 0;
-      const elapsedYear = year - list.year;
-      if (elapsedYear < 0) return 0;
-      const income = (list.income * (list.rate / 100 + 1) ** elapsedYear).toFixed(1);
-      return income;
     },
     createPDF() {
       const pdfname = 'mypdf';
@@ -254,7 +172,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 table,
 td,
 th,

@@ -5,18 +5,18 @@
       <div v-for="(home, index) in this.homeSpendingList" :key="`first-${index}`">
         <div>{{ home.year }}</div>
         <div>{{ home.price }}</div>
-        <button type="button" @click="openEditSpending(home)">編集</button>
-        <button type="button" @click="deleteSpending(home._id)">削除</button>
+        <Button @myClick="openEditSpending(home)" class="btn-primary" label="編集" />
+        <Button @myClick="deleteSpending(home._id)" class="btn-danger" label="削除" />
       </div>
       <hr />
       <h5>車の支出</h5>
       <div v-for="(car, index) in this.carSpendingList" :key="`second-${index}`">
         <div>{{ car.year }}</div>
         <div>{{ car.price }}</div>
-        <button type="button" @click="openEditSpending(car)">編集</button>
-        <button type="button" @click="deleteSpending(car._id)">削除</button>
+        <Button @myClick="openEditSpending(car)" class="btn-primary" label="編集" />
+        <Button @myClick="deleteSpending(car._id)" class="btn-danger" label="削除" />
       </div>
-      <button type="button" @click="openCreateSpending">追加</button>
+      <Button @myClick="openCreateSpending" class="btn-primary" label="追加" />
     </div>
     <ModalWindow @close="closeCreateSpending()" v-show="showCreateSpending">
       <h6>支出を追加</h6>
@@ -38,7 +38,6 @@
           <td>
             <div>
               <input type="number" v-model.number="purchaseYear" />
-              <p class="error" v-show="error.year">{{ error.message }}</p>
             </div>
           </td>
         </tr>
@@ -47,15 +46,16 @@
           <td>
             <div>
               <input type="number" v-model.number="purchasePrice" />
-              <p class="error" v-show="error.price">{{ error.message }}</p>
             </div>
           </td>
         </tr>
       </table>
 
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <template slot="footer">
-        <button @click="createSpending()">決定</button>
-        <button @click="closeCreateSpending()">閉じる</button>
+        <Button @myClick="createSpending()" class="btn-primary" label="決定" />
+        <Button @myClick="editCreateSpending()" class="btn-outline-primary" label="閉じる" />
       </template>
     </ModalWindow>
     <ModalWindow @close="closeEditSpending()" v-show="showEditSpending">
@@ -70,7 +70,6 @@
                   {{ option }}
                 </option>
               </select>
-              <p class="error" v-show="error.name">{{ error.message }}</p>
             </div>
           </td>
         </tr>
@@ -79,7 +78,6 @@
           <td>
             <div>
               <input type="number" v-model.number="purchaseYear" />
-              <p class="error" v-show="error.year">{{ error.message }}</p>
             </div>
           </td>
         </tr>
@@ -88,15 +86,16 @@
           <td>
             <div>
               <input type="number" v-model.number="purchasePrice" />
-              <p class="error" v-show="error.price">{{ error.message }}</p>
             </div>
           </td>
         </tr>
       </table>
 
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <template slot="footer">
-        <button @click="editSpending()">決定</button>
-        <button @click="closeEditSpending()">閉じる</button>
+        <Button @myClick="editSpending()" class="btn-primary" label="決定" />
+        <Button @myClick="editEditSpending()" class="btn-outline-primary" label="閉じる" />
       </template>
     </ModalWindow>
   </div>
@@ -104,12 +103,14 @@
 
 <script>
 // @ is an alias to /src
-import ModalWindow from '@/components/ModalWindow';
+import ModalWindow from '@/components/molecules/ModalWindow';
 import { ipcRenderer } from 'electron';
+import Button from '@/components/atoms/Button';
 
 export default {
   components: {
     ModalWindow,
+    Button,
   },
   data() {
     return {
@@ -123,9 +124,7 @@ export default {
       carSpendingList: [],
       id: [],
       error: {
-        name: false,
-        year: false,
-        price: false,
+        isError: false,
         message: '',
       },
     };
@@ -145,36 +144,33 @@ export default {
     },
     closeCreateSpending() {
       this.showCreateSpending = false;
-      this.error.name = false;
-      this.error.year = false;
-      this.error.price = false;
+      this.error.isError = false;
       this.error.message = '';
     },
     closeEditSpending() {
       this.showEditSpending = false;
-      this.error.name = false;
-      this.error.year = false;
-      this.error.price = false;
+      this.error.isError = false;
       this.error.message = '';
     },
     createSpending() {
       if (!this.selectedSpending) {
-        this.error.name = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '種類は必須項目です';
         return;
       } else if (!this.purchaseYear) {
-        this.error.year = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '年は必須項目です';
         return;
-      } else if (this.purchaseYear > 1900 && this.purchaseYear < 2100) {
-        this.error.year = true;
+      } else if (this.purchaseYear < 1900 || this.purchaseYear > 2100) {
+        this.error.isError = true;
         this.error.message = '適切な年を入力してください';
         return;
       } else if (!this.purchasePrice) {
-        this.error.price = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '金額は必須項目です';
+        return;
       } else if (this.purchasePrice < 0) {
-        this.error.price = true;
+        this.error.isError = true;
         this.error.message = '正の数を入力してください';
         return;
       }
@@ -228,7 +224,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .error {
   color: red;
 }
