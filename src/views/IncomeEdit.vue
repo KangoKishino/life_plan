@@ -4,7 +4,7 @@
       <h5>収入</h5>
       <div v-for="(family, index) in this.family" :key="index">
         <div>{{ family.name }}</div>
-        <button type="button" @click="openEditIncome(family._id)">編集</button>
+        <Button @myClick="openEditIncome(family._id)" class="btn-primary" label="編集" />
       </div>
     </div>
     <ModalWindow @close="closeCreateSpending()" v-show="showEditIncome">
@@ -14,28 +14,29 @@
           <td>開始年</td>
           <td>
             <div><input type="number" v-model.number="startYear" /></div>
-            <p class="error" v-show="error.year">{{ error.message }}</p>
           </td>
         </tr>
         <tr>
           <td>年収</td>
           <td>
             <div><input type="number" v-model.number="income" /></div>
-            <p class="error" v-show="error.income">{{ error.message }}</p>
           </td>
         </tr>
         <tr>
           <td>上昇率</td>
           <td>
             <div><input type="number" v-model.number="rate" />%</div>
-            <p class="error" v-show="error.rate">{{ error.message }}</p>
           </td>
         </tr>
       </table>
 
+      <p class="error" v-show="error.isError">{{ error.message }}</p>
+
       <template slot="footer">
         <button @click="editIncome()">決定</button>
         <button @click="closeEditIncome()">閉じる</button>
+        <Button @myClick="editIncome()" class="btn-primary" label="決定" />
+        <Button @myClick="closeEditIncome()" class="btn-outline-primary" label="閉じる" />
       </template>
     </ModalWindow>
   </div>
@@ -43,12 +44,14 @@
 
 <script>
 // @ is an alias to /src
-import ModalWindow from '@/components/ModalWindow';
+import ModalWindow from '@/components/molecules/ModalWindow';
 import { ipcRenderer } from 'electron';
+import Button from '@/components/atoms/Button';
 
 export default {
   components: {
     ModalWindow,
+    Button,
   },
   data() {
     return {
@@ -61,9 +64,7 @@ export default {
       family: [],
       incomeList: [],
       error: {
-        year: false,
-        income: false,
-        rate: false,
+        isError: false,
         message: '',
       },
     };
@@ -86,37 +87,31 @@ export default {
     },
     closeEditIncome() {
       this.showEditIncome = false;
-      this.error.year = false;
-      this.error.income = false;
-      this.error.rate = false;
+      this.error.isError = false;
     },
     editIncome() {
       if (!this.startYear) {
-        this.error.year = true;
-        this.error.message = '必須項目です';
+        this.error.isError = true;
+        this.error.message = '開始年は必須項目です';
         return;
       } else if (typeof this.startYear !== 'number') {
-        this.error.year = true;
+        this.error.isError = true;
         this.error.message = '数値を入力してください';
         return;
       } else if (this.startYear < 0) {
-        this.error.year = true;
+        this.error.isError = true;
         this.error.message = '正の数を入力してください';
         return;
-      } else if (!this.income) {
-        this.error.income = true;
-        this.error.message = '必須項目です';
-        return;
       } else if (typeof this.income !== 'number') {
-        this.error.income = true;
+        this.error.isError = true;
         this.error.message = '数値を入力してください';
         return;
       } else if (this.income < 0) {
-        this.error.income = true;
+        this.error.isError = true;
         this.error.message = '正の数を入力してください';
         return;
       } else if (typeof this.rate !== 'number') {
-        this.error.rate = true;
+        this.error.isError = true;
         this.error.message = '数値を入力してください';
         return;
       }
@@ -146,7 +141,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .error {
   color: red;
 }
